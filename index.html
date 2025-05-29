@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TravelPlan - Your Journey Starts Here</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-color: #f093fb;
+            --dark-bg: #1a1a2e;
+            --card-bg: #16213e;
+            --text-light: #eee;
+            --text-muted: #a0a0a0;
+            --success-color: #4ecdc4;
+            --warning-color: #ffe66d;
+            --danger-color: #ff6b6b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--dark-bg) 0%, var(--card-bg) 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(20px);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-item {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            gap: 4px;
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 3px;
+            background: var(--text-light);
+            border-radius: 2px;
+            transition: 0.3s;
+        }
+
+        /* Main Container */
+        .main-container {
+            margin-top: 80px;
+            padding: 2rem;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Dashboard Layout */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            gap: 2rem;
+            min-height: calc(100vh - 120px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: rgba(22, 33, 62, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            height: fit-content;
+        }
+
+        .trip-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .form-input, .form-select {
+            padding: 0.8rem;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-light);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-light);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Map Container */
+        .map-container {
+            background: rgba(22, 33, 62, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .map-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .map-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .map-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .map-btn {
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 8px;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .map-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        #map {
+            height: 500px;
+            width: 100%;
+        }
+
+        /* Itinerary Panel */
+        .itinerary-panel {
+            background: rgba(22, 33, 62, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            height: fit-content;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .itinerary-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .itinerary-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .itinerary-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .item-title {
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        .item-date {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .item-description {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .action-btn {
+            padding: 0.3rem 0.6rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .edit-btn {
+            background: var(--warning-color);
+            color: var(--dark-bg);
+        }
+
+        .delete-btn {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        /* Collaboration Panel */
+        .collaboration-panel {
+            margin-top: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .collaborators {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .collaborator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--primary-color);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .add-collaborator {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .add-collaborator input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-light);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: 280px 1fr 300px;
+                gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .sidebar, .itinerary-panel {
+                order: 2;
+            }
+            
+            .map-container {
+                order: 1;
+            }
+            
+            .nav-menu {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: rgba(26, 26, 46, 0.95);
+                backdrop-filter: blur(20px);
+                flex-direction: column;
+                padding: 1rem;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            
+            .nav-menu.active {
+                display: flex;
+            }
+            
+            .hamburger {
+                display: flex;
+            }
+            
+            .hamburger.active span:nth-child(1) {
+                transform: rotate(45deg) translate(5px, 5px);
+            }
+            
+            .hamburger.active span:nth-child(2) {
+                opacity: 0;
+            }
+            
+            .hamburger.active span:nth-child(3) {
+                transform: rotate(-45deg) translate(7px, -6px);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 1rem;
+            }
+            
+            .nav-container {
+                padding: 0 1rem;
+            }
+            
+            .sidebar, .itinerary-panel {
+                padding: 1.5rem;
+            }
+            
+            #map {
+                height: 400px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .logo {
+                font-size: 1.5rem;
+            }
+            
+            .modal-content {
+                padding: 1.5rem;
+                width: 95%;
+            }
+            
+            .collaborators {
+                gap: 0.3rem;
+            }
+            
+            .collaborator {
+                font-size: 0.7rem;
+                padding: 0.2rem 0.6rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* Loading States */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav-container">
+            <div class="logo">
+                <i class="fas fa-map-marked-alt"></i> TravelPlan
+            </div>
+            <ul class="nav-menu" id="navMenu">
+                <li class="nav-item active" data-tab="dashboard">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </li>
+                <li class="nav-item" data-tab="trips">
+                    <i class="fas fa-suitcase"></i> My Trips
+                </li>
+                <li class="nav-item" data-tab="explore">
+                    <i class="fas fa-compass"></i> Explore
+                </li>
+                <li class="nav-item" data-tab="profile">
+                    <i class="fas fa-user"></i> Profile
+                </li>
+            </ul>
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        <!-- Dashboard -->
+        <div class="dashboard fade-in-up">
+            <!-- Sidebar - Trip Planning -->
+            <aside class="sidebar">
+                <h2 style="margin-bottom: 2rem; color: var(--primary-color);">
+                    <i class="fas fa-route"></i> Plan Your Trip
+                </h2>
+                
+                <form class="trip-form" id="tripForm">
+                    <div class="form-group">
+                        <label class="form-label">Trip Name</label>
+                        <input type="text" class="form-input" id="tripName" placeholder="Amazing European Adventure" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Destination</label>
+                        <input type="text" class="form-input" id="destination" placeholder="Paris, France" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Start Date</label>
+                        <input type="date" class="form-input" id="startDate" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">End Date</label>
+                        <input type="date" class="form-input" id="endDate" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Trip Type</label>
+                        <select class="form-select" id="tripType">
+                            <option value="leisure">Leisure</option>
+                            <option value="business">Business</option>
+                            <option value="adventure">Adventure</option>
+                            <option value="family">Family</option>
+                            <option value="solo">Solo Travel</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Budget Range</label>
+                        <select class="form-select" id="budget">
+                            <option value="budget">Budget ($0 - $1000)</option>
+                            <option value="mid">Mid-range ($1000 - $5000)</option>
+                            <option value="luxury">Luxury ($5000+)</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-magic"></i> Create Trip
+                    </button>
+                </form>
+                
+                <div style="margin-top: 2rem;">
+                    <button class="btn btn-secondary" style="width: 100%;" onclick="showSuggestionsModal()">
+                        <i class="fas fa-lightbulb"></i> Get AI Suggestions
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Map Container -->
+            <section class="map-container">
+                <div class="map-header">
+                    <h3 class="map-title">
+                        <i class="fas fa-globe-americas"></i> Interactive Route Map
+                    </h3>
+                    <div class="map-controls">
+                        <button class="map-btn" onclick="centerMap()" title="Center Map">
+                            <i class="fas fa-crosshairs"></i>
+                        </button>
+                        <button class="map-btn" onclick="toggleSatellite()" title="Toggle Satellite">
+                            <i class="fas fa-satellite"></i>
+                        </button>
+                        <button class="map-btn" onclick="fullscreenMap()" title="Fullscreen">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="map"></div>
+            </section>
+
+            <!-- Itinerary Panel -->
+            <aside class="itinerary-panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">
+                        <i class="fas fa-calendar-alt"></i> Itinerary
+                    </h3>
+                    <button class="btn btn-secondary" onclick="showAddItemModal()">
+                        <i class="fas fa-plus"></i> Add
+                    </button>
+                </div>
+                
+                <div class="itinerary-list" id="itineraryList">
+                    <!-- Sample Items -->
+                    <div class="itinerary-item">
+                        <div class="item-header">
+                            <span class="item-title">Eiffel Tower Visit</span>
+                            <span class="item-date">Dec 15</span>
+                        </div>
+                        <div class="item-description">
+                            Iconic landmark visit with sunset photography session
+                        </div>
+                        <div class="item-actions">
+                            <button class="action-btn edit-btn">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="action-btn delete-btn">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="itinerary-item">
+                        <div class="item-header">
+                            <span class="item-title">Louvre Museum</span>
+                            <span class="item-date">Dec 16</span>
+                        </div>
+                        <div class="item-description">
+                            Art museum exploration and Mona Lisa viewing
+                        </div>
+                        <div class="item-actions">
+                            <button class="action-btn edit-btn">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="action-btn delete-btn">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Collaboration Panel -->
+                <div class="collaboration-panel">
+                    <h4 style="margin-bottom: 1rem; color: var(--success-color);">
+                        <i class="fas fa-users"></i> Collaborators
+                    </h4>
+                    
+                    <div class="collaborators" id="collaboratorsList">
+                        <div class="collaborator">
+                            <i class="fas fa-user"></i>
+                            <span>John Doe</span>
+                        </div>
+                        <div class="collaborator">
+                            <i class="fas fa-user"></i>
+                            <span>Jane Smith</span>
+                        </div>
+                    </div>
+                    
+                    <div class="add-collaborator">
+                        <input type="email" placeholder="Enter email to invite" id="collaboratorEmail">
+                        <button class="btn btn-secondary" onclick="addCollaborator()">
+                            <i class="fas fa-user-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Modal for Adding Itinerary Items -->
+    <div class="modal" id="addItemModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add Itinerary Item</h3>
+                <button class="close-btn" onclick="closeModal('addItemModal')">&times;</button>
+            </div>
+            
+            <form id="addItemForm">
+                <div class="form-group">
+                    <label class="form-label">Title</label>
+                    <input type="text" class="form-input" id="itemTitle" placeholder="Activity or location" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-input" id="itemDate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-input" id="itemDescription" rows="3" placeholder="Details about this activity"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Location</label>
+                    <input type="text" class="form-input" id="itemLocation" placeholder="Address or coordinates">
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">
+                        <i class="fas fa-plus"></i> Add Item
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addItemModal')">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for AI Suggestions -->
+    <div class="modal" id="suggestionsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">AI Travel Suggestions</h3>
+                <button class="close-btn" onclick="closeModal('suggestionsModal')">&times;</button>
+            </div>
+            
+            <div id="suggestionsContent">
+                <div style="text-align: center; padding: 2rem;">
+                    <div class="loading"></div>
+                    <p style="margin-top: 1rem; color: var(--text-muted);">Generating personalized suggestions...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script>
+        // Global Variables
+        let map;
+        let markers = [];
+        let routeLayer;
+        let currentTrip = null;
+        let itineraryItems = [];
+        let collaborators = ['John Doe', 'Jane Smith'];
+
+        // Initialize Application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeMap();
+            setupEventListeners();
+            loadSampleData();
+        });
+
+        // Map Initialization
+        function initializeMap() {
+            map = L.map('map').setView([48.8566, 2.3522], 13); // Paris coordinates
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            // Add sample markers
+            addMarker([48.8584, 2.2945], 'Eiffel Tower', 'Iconic iron tower and symbol of Paris');
+            addMarker([48.8606, 2.3376], 'Louvre Museum', 'World\'s largest art museum');
+            
+            // Draw route between markers
+            if (markers.length > 1) {
+                drawRoute();
+            }
+        }
+
+        // Event Listeners Setup
+        function setupEventListeners() {
+            // Navigation
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+
+            // Mobile menu toggle
+            const hamburger = document.getElementById('hamburger');
+            const navMenu = document.getElementById('navMenu');
+            
+            hamburger.addEventListener('click', function() {
+                hamburger.classList.toggle('active');
+                navMenu.classList.toggle('active');
+            });
+
+            // Trip form submission
+            document.getElementById('tripForm').addEventListener('submit', handleTripSubmission);
+            
+            // Add item form submission
+            document.getElementById('addItemForm').addEventListener('submit', handleAddItem);
+        }
+
+        // Map Functions
+        function addMarker(coords, title, description) {
+            const marker = L.marker(coords).addTo(map);
+            marker.bindPopup(`<h4>${title}</h4><p>${description}</p>`);
+            markers.push({ marker, coords, title, description });
+            return marker;
+        }
+
+        function drawRoute() {
+            if (routeLayer) {
+                map.removeLayer(routeLayer);
+            }
+            
+            const coords = markers.map(m => m.coords);
+            routeLayer = L.polyline(coords, {
+                color: '#667eea',
+                weight: 4,
+                opacity: 0.8
+            }).addTo(map);
+            
+            map.fitBounds(routeLayer.getBounds(), { padding: [20, 20] });
+        }
+
+        function centerMap() {
+            if (markers.length > 0) {
+                const group = new L.featureGroup(markers.map(m => m.marker));
+                map.fitBounds(group.getBounds().pad(0.1));
+            } else {
+                map.setView([48.8566, 2.3522], 13);
+            }
+        }
+
+        function toggleSatellite() {
+            // Implementation for satellite toggle would require additional tile layers
+            showNotification('Satellite view toggle - Feature coming soon!', 'info');
+        }
+
+        function fullscreenMap() {
+            const mapContainer = document.querySelector('.map-container');
+            if (!document.fullscreenElement) {
+                mapContainer.requestFullscreen().then(() => {
+                    setTimeout(() => map.invalidateSize(), 100);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Trip Management Functions
+        function handleTripSubmission(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const tripData = {
+                name: document.getElementById('tripName').value,
+                destination: document.getElementById('destination').value,
+                startDate: document.getElementById('startDate').value,
+                endDate: document.getElementById('endDate').value,
+                type: document.getElementById('tripType').value,
+                budget: document.getElementById('budget').value
+            };
+            
+            // Simulate trip creation
+            createTrip(tripData);
+            showNotification('Trip created successfully!', 'success');
+            
+            // Clear form
+            e.target.reset();
+        }
+
+        function createTrip(tripData) {
+            currentTrip = {
+                id: Date.now(),
+                ...tripData,
+                createdAt: new Date(),
+                collaborators: [...collaborators]
+            };
+            
+            // Update map to show destination
+            geocodeAndShowDestination(tripData.destination);
+        }
+
+        async function geocodeAndShowDestination(destination) {
+            try {
+                // Simple geocoding simulation (in real app, use proper geocoding service)
+                const destinations = {
+                    'paris': [48.8566, 2.3522],
+                    'london': [51.5074, -0.1278],
+                    'tokyo': [35.6762, 139.6503],
+                    'new york': [40.7128, -74.0060],
+                    'rome': [41.9028, 12.4964]
+                };
+                
+                const key = destination.toLowerCase().split(',')[0];
+                const coords = destinations[key] || [48.8566, 2.3522];
+                
+                map.setView(coords, 12);
+                addMarker(coords, destination, 'Your destination');
+                
+            } catch (error) {
+                console.error('Geocoding error:', error);
+                showNotification('Could not locate destination', 'error');
+            }
+        }
+
+        // Itinerary Management
+        function handleAddItem(e) {
+            e.preventDefault();
+            
+            const itemData = {
+                id: Date.now(),
+                title: document.getElementById('itemTitle').value,
+                date: document.getElementById('itemDate').value,
+                description: document.getElementById('itemDescription').value,
+                location: document.getElementById('itemLocation').value
+            };
+            
+            addItineraryItem(itemData);
+            closeModal('addItemModal');
+            e.target.reset();
+        }
+
+        function addItineraryItem(itemData) {
+            itineraryItems.push(itemData);
+            renderItineraryItems();
+            
+            // Add marker to map if location provided
+            if (itemData.location) {
+                // Simple location mapping (in real app, use geocoding)
+                const coords = getLocationCoords(itemData.location);
+                if (coords) {
+                    addMarker(coords, itemData.title, itemData.description);
+                    drawRoute();
+                }
+            }
+            
+            showNotification('Itinerary item added successfully!', 'success');
+        }
+
+        function getLocationCoords(location) {
+            // Simplified location mapping
+            const locations = {
+                'eiffel tower': [48.8584, 2.2945],
+                'louvre museum': [48.8606, 2.3376],
+                'arc de triomphe': [48.8738, 2.2950],
+                'notre dame': [48.8530, 2.3499],
+                'sacre coeur': [48.8867, 2.3431]
+            };
+            
+            return locations[location.toLowerCase()] || null;
+        }
+
+        function renderItineraryItems() {
+            const container = document.getElementById('itineraryList');
+            container.innerHTML = '';
+            
+            // Sort items by date
+            const sortedItems = [...itineraryItems].sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            sortedItems.forEach(item => {
+                const itemElement = createItineraryItemElement(item);
+                container.appendChild(itemElement);
+            });
+        }
+
+        function createItineraryItemElement(item) {
+            const div = document.createElement('div');
+            div.className = 'itinerary-item fade-in-up';
+            div.innerHTML = `
+                <div class="item-header">
+                    <span class="item-title">${item.title}</span>
+                    <span class="item-date">${formatDate(item.date)}</span>
+                </div>
+                <div class="item-description">${item.description || 'No description provided'}</div>
+                ${item.location ? `<div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;"><i class="fas fa-map-marker-alt"></i> ${item.location}</div>` : ''}
+                <div class="item-actions">
+                    <button class="action-btn edit-btn" onclick="editItineraryItem('${item.id}')">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button class="action-btn delete-btn" onclick="deleteItineraryItem('${item.id}')">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            `;
+            return div;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        function editItineraryItem(itemId) {
+            const item = itineraryItems.find(i => i.id == itemId);
+            if (item) {
+                // Populate modal with existing data
+                document.getElementById('itemTitle').value = item.title;
+                document.getElementById('itemDate').value = item.date;
+                document.getElementById('itemDescription').value = item.description || '';
+                document.getElementById('itemLocation').value = item.location || '';
+                
+                // Show modal and change submit behavior
+                showAddItemModal();
+                const form = document.getElementById('addItemForm');
+                form.onsubmit = function(e) {
+                    e.preventDefault();
+                    updateItineraryItem(itemId);
+                };
+            }
+        }
+
+        function updateItineraryItem(itemId) {
+            const itemIndex = itineraryItems.findIndex(i => i.id == itemId);
+            if (itemIndex !== -1) {
+                itineraryItems[itemIndex] = {
+                    ...itineraryItems[itemIndex],
+                    title: document.getElementById('itemTitle').value,
+                    date: document.getElementById('itemDate').value,
+                    description: document.getElementById('itemDescription').value,
+                    location: document.getElementById('itemLocation').value
+                };
+                
+                renderItineraryItems();
+                closeModal('addItemModal');
+                showNotification('Itinerary item updated successfully!', 'success');
+                
+                // Reset form behavior
+                document.getElementById('addItemForm').onsubmit = handleAddItem;
+            }
+        }
+
+        function deleteItineraryItem(itemId) {
+            if (confirm('Are you sure you want to delete this item?')) {
+                itineraryItems = itineraryItems.filter(i => i.id != itemId);
+                renderItineraryItems();
+                showNotification('Itinerary item deleted successfully!', 'success');
+            }
+        }
+
+        // Collaboration Functions
+        function addCollaborator() {
+            const email = document.getElementById('collaboratorEmail').value.trim();
+            if (email && isValidEmail(email)) {
+                // Simulate adding collaborator
+                const name = email.split('@')[0].replace(/[._]/g, ' ');
+                collaborators.push(name);
+                renderCollaborators();
+                document.getElementById('collaboratorEmail').value = '';
+                showNotification(`Invitation sent to ${email}`, 'success');
+            } else {
+                showNotification('Please enter a valid email address', 'error');
+            }
+        }
+
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function renderCollaborators() {
+            const container = document.getElementById('collaboratorsList');
+            container.innerHTML = '';
+            
+            collaborators.forEach((name, index) => {
+                const collaboratorElement = document.createElement('div');
+                collaboratorElement.className = 'collaborator';
+                collaboratorElement.innerHTML = `
+                    <i class="fas fa-user"></i>
+                    <span>${name}</span>
+                    ${index > 1 ? `<i class="fas fa-times" onclick="removeCollaborator(${index})" style="margin-left: 0.5rem; cursor: pointer;"></i>` : ''}
+                `;
+                container.appendChild(collaboratorElement);
+            });
+        }
+
+        function removeCollaborator(index) {
+            if (confirm('Remove this collaborator from the trip?')) {
+                collaborators.splice(index, 1);
+                renderCollaborators();
+                showNotification('Collaborator removed', 'info');
+            }
+        }
+
+        // Modal Functions
+        function showAddItemModal() {
+            document.getElementById('addItemModal').style.display = 'flex';
+        }
+
+        function showSuggestionsModal() {
+            document.getElementById('suggestionsModal').style.display = 'flex';
+            loadAISuggestions();
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function loadAISuggestions() {
+            // Simulate AI suggestions loading
+            setTimeout(() => {
+                const suggestions = [
+                    {
+                        title: "Seine River Cruise",
+                        description: "Romantic evening cruise with dinner and city lights",
+                        category: "Activity",
+                        rating: 4.8
+                    },
+                    {
+                        title: "Montmartre Walking Tour",
+                        description: "Explore the artistic district with a local guide",
+                        category: "Tour",
+                        rating: 4.6
+                    },
+                    {
+                        title: "Palace of Versailles",
+                        description: "Day trip to the magnificent royal palace",
+                        category: "Attraction",
+                        rating: 4.9
+                    },
+                    {
+                        title: "French Cooking Class",
+                        description: "Learn to cook authentic French cuisine",
+                        category: "Experience",
+                        rating: 4.7
+                    }
+                ];
+                
+                renderSuggestions(suggestions);
+            }, 2000);
+        }
+
+        function renderSuggestions(suggestions) {
+            const container = document.getElementById('suggestionsContent');
+            container.innerHTML = `
+                <h4 style="margin-bottom: 1.5rem; color: var(--primary-color);">
+                    <i class="fas fa-sparkles"></i> Recommended for Your Trip
+                </h4>
+            `;
+            
+            suggestions.forEach(suggestion => {
+                const suggestionElement = document.createElement('div');
+                suggestionElement.className = 'suggestion-item';
+                suggestionElement.style.cssText = `
+                    background: rgba(255, 255, 255, 0.05);
+                    border-radius: 12px;
+                    padding: 1.5rem;
+                    margin-bottom: 1rem;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                `;
+                
+                suggestionElement.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <h5 style="color: var(--text-light); margin: 0;">${suggestion.title}</h5>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="background: var(--primary-color); color: white; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.8rem;">
+                                ${suggestion.category}
+                            </span>
+                            <div style="color: var(--warning-color);">
+                                <i class="fas fa-star"></i> ${suggestion.rating}
+                            </div>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-muted); margin: 0; line-height: 1.4;">${suggestion.description}</p>
+                    <div style="margin-top: 1rem;">
+                        <button class="btn btn-secondary" onclick="addSuggestionToItinerary('${suggestion.title}', '${suggestion.description}')" 
+                                style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                            <i class="fas fa-plus"></i> Add to Itinerary
+                        </button>
+                    </div>
+                `;
+                
+                suggestionElement.addEventListener('mouseenter', function() {
+                    this.style.background = 'rgba(255, 255, 255, 0.08)';
+                    this.style.transform = 'translateY(-2px)';
+                });
+                
+                suggestionElement.addEventListener('mouseleave', function() {
+                    this.style.background = 'rgba(255, 255, 255, 0.05)';
+                    this.style.transform = 'translateY(0)';
+                });
+                
+                container.appendChild(suggestionElement);
+            });
+        }
+
+        function addSuggestionToItinerary(title, description) {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            const itemData = {
+                id: Date.now(),
+                title: title,
+                date: tomorrow.toISOString().split('T')[0],
+                description: description,
+                location: ''
+            };
+            
+            addItineraryItem(itemData);
+            closeModal('suggestionsModal');
+        }
+
+        // Utility Functions
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                background: ${type === 'success' ? 'var(--success-color)' : 
+                           type === 'error' ? 'var(--danger-color)' : 
+                           type === 'warning' ? 'var(--warning-color)' : 
+                           'var(--primary-color)'};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 12px;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+                z-index: 3000;
+                transform: translateX(400px);
+                transition: all 0.3s ease;
+                max-width: 300px;
+                font-weight: 500;
+            `;
+            
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 
+                                     type === 'error' ? 'exclamation-circle' : 
+                                     type === 'warning' ? 'exclamation-triangle' : 
+                                     'info-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Auto remove
+            setTimeout(() => {
+                notification.style.transform = 'translateX(400px)';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 4000);
+        }
+
+        function loadSampleData() {
+            // Load sample itinerary items
+            const sampleItems = [
+                {
+                    id: 1,
+                    title: 'Eiffel Tower Visit',
+                    date: '2024-12-15',
+                    description: 'Iconic landmark visit with sunset photography session',
+                    location: 'Eiffel Tower'
+                },
+                {
+                    id: 2,
+                    title: 'Louvre Museum',
+                    date: '2024-12-16',
+                    description: 'Art museum exploration and Mona Lisa viewing',
+                    location: 'Louvre Museum'
+                }
+            ];
+            
+            itineraryItems = sampleItems;
+            renderItineraryItems();
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                // Close any open modals
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.style.display = 'none';
+                });
+            }
+            
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'n':
+                        e.preventDefault();
+                        showAddItemModal();
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        document.getElementById('tripForm').requestSubmit();
+                        break;
+                }
+            }
+        });
+
+        // Click outside modal to close
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                e.target.style.display = 'none';
+            }
+        });
+
+        // Auto-save functionality (simulated)
+        let autoSaveTimer;
+        function triggerAutoSave() {
+            clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(() => {
+                // Simulate auto-save
+                console.log('Auto-saving trip data...');
+                localStorage.setItem('tripData', JSON.stringify({
+                    currentTrip,
+                    itineraryItems,
+                    collaborators
+                }));
+            }, 2000);
+        }
+
+        // Add auto-save triggers to form inputs
+        document.querySelectorAll('input, textarea, select').forEach(input => {
+            input.addEventListener('input', triggerAutoSave);
+        });
+
+        // Export functionality
+        function exportTrip() {
+            const tripData = {
+                trip: currentTrip,
+                itinerary: itineraryItems,
+                collaborators: collaborators,
+                exportDate: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(tripData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `trip-${currentTrip?.name || 'unnamed'}-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            showNotification('Trip exported successfully!', 'success');
+        }
+
+        // Initialize tooltips and accessibility features
+        function initializeAccessibility() {
+            // Add ARIA labels
+            document.querySelectorAll('button').forEach(button => {
+                if (!button.getAttribute('aria-label') && button.title) {
+                    button.setAttribute('aria-label', button.title);
+                }
+            });
+            
+            // Keyboard navigation for custom elements
+            document.querySelectorAll('.itinerary-item').forEach(item => {
+                item.setAttribute('tabindex', '0');
+                item.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        this.click();
+                    }
+                });
+            });
+        }
+
+        // Call accessibility initialization
+        setTimeout(initializeAccessibility, 1000);
+
+        // Service worker registration for offline functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                // Service worker would be registered here in a real application
+                console.log('Service worker support detected');
+            });
+        }
+    </script>
+</body>
+</html>
